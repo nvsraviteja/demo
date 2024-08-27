@@ -1,0 +1,19 @@
+dn: ou=Users,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Users
+
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+
+dn: cn=jenkins-admin,ou=Users,dc=example,dc=com
+objectClass: inetOrgPerson
+cn: jenkins-admin
+sn: Admin
+uid: jenkins-admin
+userPassword: admin
+
+dn: cn=jenkins-users,ou=Groups,dc=example,dc=com
+objectClass: groupOfNames
+cn: jenkins-users
+member: cn=jenkins-admin,ou=Users,dc=example,dc=com

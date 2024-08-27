@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  ldap:
+    image: osixia/openldap:1.5.0
+    container_name: openldap
+    environment:
+      LDAP_ORGANISATION: "Example Corp"
+      LDAP_DOMAIN: "example.com"
+      LDAP_ADMIN_PASSWORD: "admin"
+    ports:
+      - "389:389"
+      - "636:636"
+    volumes:
+      - ldap-data:/var/lib/ldap
+      - ldap-config:/etc/ldap/slapd.d
+      - ./ldap/init.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/init.ldif:ro
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: phpldapadmin
+    environment:
+      PHPLDAPADMIN_HTTPS: "false"
+      LDAP_HOSTS: "#PYTHON2BASH:[{'openldap': [{'server': 'ldap'}]}]"
+    ports:
+      - "6443:443"
+
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    user: root
+    ports:
+      - "8080:8080"
+    volumes:
+      - jenkins-data:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock # For Docker inside Jenkins
+      - ./jenkins/init.groovy.d/:/var/jenkins_home/init.groovy.d/
+
+  nodejs-app:
+    image: node:14
+    container_name: nodejs-app
+    working_dir: /usr/src/app
+    volumes:
+      - ./nodejs-app:/usr/src/app
+    command: sh -c "npm install && npm run build"
+
+volumes:
+  ldap-data:
+  ldap-config:
+  jenkins-data:
