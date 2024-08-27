@@ -1,11 +1,11 @@
 import jenkins.model.*
 import hudson.security.*
 import org.jenkinsci.plugins.*
-import hudson.model.FreeStyleProject
-import hudson.plugins.git.*
+import jenkins.security.s2m.AdminWhitelistRule
 
 def instance = Jenkins.getInstance()
 
+// Configure LDAP Security Realm
 def ldapRealm = new LDAPSecurityRealm(
   "ldap://openldap:389", // LDAP server
   "dc=example,dc=com", // root DN
@@ -32,6 +32,24 @@ def ldapRealm = new LDAPSecurityRealm(
 )
 
 instance.setSecurityRealm(ldapRealm)
+
+// Set up Authorization Strategy (Matrix-based security strategy)
+def strategy = new GlobalMatrixAuthorizationStrategy()
+
+// Grant full access to the jenkins-admin user
+strategy.add(Jenkins.ADMINISTER, "jenkins-admin")
+
+// Optionally, grant full access to all authenticated users
+// strategy.add(Jenkins.ADMINISTER, "authenticated")
+
+instance.setAuthorizationStrategy(strategy)
+
+// Disable the Jenkins CLI over remoting
+instance.getDescriptor("jenkins.CLI").get().setEnabled(false)
+
+// Disable Jenkins Agent to Master security
+instance.injector.getInstance(AdminWhitelistRule.class).setMasterKillSwitch(false)
+
 instance.save()
 
 // Create a new pipeline job for Node.js
@@ -43,4 +61,3 @@ job.addProperty(new hudson.model.ParametersDefinitionProperty(
   new hudson.model.StringParameterDefinition("BRANCH", "main", "Branch to build")
 ))
 job.save()
-
